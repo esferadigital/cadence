@@ -1,7 +1,6 @@
 package timer
 
 import (
-	"log"
 	"time"
 )
 
@@ -25,6 +24,16 @@ const (
 	PhaseBreak
 )
 
+func (pk PhaseKind) Name() string {
+	var name string
+	if pk == PhaseWork {
+		name = "Work"
+	} else {
+		name = "Break"
+	}
+	return name
+}
+
 type PhaseDetail struct {
 	Kind     PhaseKind
 	Duration time.Duration
@@ -32,30 +41,22 @@ type PhaseDetail struct {
 
 // ---- events ----
 
-type EventKind int
+type TimerMsg interface{}
 
-const (
-	Tick EventKind = iota
-	PhaseFinished
-	TimerFinished
-)
-
-// Data sent with event
-type EventData struct {
-	// Sent for `Tick` and `PhaseFinished`
-	PhaseIdx int
-
-	// Sent for `Tick`
+type TickMsg struct {
 	PhaseRemaining time.Duration
+	PhaseIdx       int
+	PhaseHumanIdx  int
+	PhaseKind      PhaseKind
 }
 
-type TimerEvent struct {
-	// Always sent
-	Kind EventKind
-
-	// Sent for `Tick` and `PhaseFinished`
-	Data EventData
+type PhaseFinishedMsg struct {
+	PhaseIdx      int
+	PhaseHumanIdx int
+	PhaseKind     PhaseKind
 }
+
+type TimerFinishedMsg struct{}
 
 // ---- timer ----
 
@@ -67,7 +68,7 @@ type Timer struct {
 	phaseElapsed  time.Duration
 	phaseLastTick time.Time
 	status        TimerStatus
-	events        chan TimerEvent
+	messages      chan TimerMsg
 }
 
 func New(workDur time.Duration, breakDur time.Duration, workPhases int) Timer {
@@ -77,12 +78,12 @@ func New(workDur time.Duration, breakDur time.Duration, workPhases int) Timer {
 		phaseCnt: (workPhases * 2) - 1,
 		phaseIdx: 0,
 		status:   StatusInit,
-		events:   make(chan TimerEvent),
+		messages: make(chan TimerMsg),
 	}
 }
 
-func (t *Timer) Events() <-chan TimerEvent {
-	return t.events
+func (t *Timer) Events() <-chan TimerMsg {
+	return t.messages
 }
 
 func (t *Timer) Start() {
@@ -97,7 +98,6 @@ func (t *Timer) Start() {
 // - Handle case where the timer is not actually running
 // - Handle case where the timer's last tick is at it's default value
 func (t *Timer) Tick() {
-	log.Println("tick, status:", t.status)
 	delta := time.Since(t.phaseLastTick)
 	for delta > 0 {
 		phase := t.phaseDetail()
@@ -113,23 +113,19 @@ func (t *Timer) Tick() {
 		next := t.phaseIdx + 1
 		if next >= t.phaseCnt {
 			t.status = StatusFinished
-			event := TimerEvent{
-				Kind: TimerFinished,
-			}
-			t.events <- event
-			close(t.events)
+			message := TimerFinishedMsg{}
+			t.messages <- message
+			close(t.messages)
 			return
 		}
 
-		// Send an event saying the phase has finished
-		data := EventData{
-			PhaseIdx: t.phaseIdx,
+		// Send a message saying the phase has finished
+		message := PhaseFinishedMsg{
+			PhaseIdx:      t.phaseIdx,
+			PhaseHumanIdx: humanIdx(t.phaseIdx),
+			PhaseKind:     phase.Kind,
 		}
-		event := TimerEvent{
-			Kind: PhaseFinished,
-			Data: data,
-		}
-		t.events <- event
+		t.messages <- message
 
 		// Subtract remaining phase duration from delta
 		remaining := t.phaseRemaining()
@@ -140,15 +136,13 @@ func (t *Timer) Tick() {
 		t.phaseElapsed = time.Duration(0)
 	}
 
-	data := EventData{
-		PhaseIdx:       t.phaseIdx,
+	message := TickMsg{
 		PhaseRemaining: t.phaseRemaining(),
+		PhaseIdx:       t.phaseIdx,
+		PhaseHumanIdx:  humanIdx(t.phaseIdx),
+		PhaseKind:      t.phaseDetail().Kind,
 	}
-	event := TimerEvent{
-		Kind: Tick,
-		Data: data,
-	}
-	t.events <- event
+	t.messages <- message
 
 	t.phaseLastTick = time.Now()
 }
@@ -174,6 +168,6 @@ func (t *Timer) phaseDetail() PhaseDetail {
 	return detail
 }
 
-// func humanIdx(phase int) int {
-// 	return phase/2 + 1
-// }
+func humanIdx(phase int) int {
+	return phase/2 + 1
+}
