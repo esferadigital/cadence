@@ -9,24 +9,30 @@ import (
 
 const AppName = "Cadence"
 
-func Listen(events <-chan timer.TimerEvent) {
+func Listen(messages <-chan timer.TimerMsg) {
 	for {
-		event, ok := <-events
+		msg, ok := <-messages
 		if !ok {
 			return
 		}
-		switch event.Kind {
-		case timer.PhaseFinished:
-			title := fmt.Sprintf("Phase %d finished", event.Data.PhaseIdx)
-			send(title, "Keep grinding")
-		case timer.TimerFinished:
-			send("Timer finished", "Nice job")
+		switch msg := msg.(type) {
+		case timer.PhaseFinishedMsg:
+			var text string
+			if msg.PhaseKind == timer.PhaseWork {
+				text = "Take 5"
+			} else {
+				text = "Time to grind"
+			}
+			title := fmt.Sprintf("%s %d finished", msg.PhaseKind.Name(), msg.PhaseIdx)
+			notify(title, text)
+		case timer.TimerFinishedMsg:
+			notify("Timer finished", "Nice job")
 			return
 		}
 	}
 }
 
-func send(title string, msg string) error {
+func notify(title string, text string) error {
 	beeep.AppName = AppName
-	return beeep.Notify(title, msg, "")
+	return beeep.Notify(title, text, "")
 }
