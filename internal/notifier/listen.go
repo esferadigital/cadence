@@ -19,7 +19,7 @@ func Listen(messages <-chan timer.TimerMsg) {
 			} else {
 				text = "Time to grind"
 			}
-			title := fmt.Sprintf("%s %d finished", msg.PhaseKind.Name(), msg.PhaseIdx)
+			title := fmt.Sprintf("%s %d finished", msg.PhaseKind.Name(), msg.PhaseHumanIdx)
 			notify(title, text)
 		case timer.TimerFinishedMsg:
 			notify("Timer finished", "Nice job")
