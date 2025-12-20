@@ -61,6 +61,7 @@ type TimerFinishedMsg struct{}
 // ---- timer ----
 
 type Timer struct {
+	interval      time.Duration
 	workDur       time.Duration
 	breakDur      time.Duration
 	phaseCnt      int
@@ -71,8 +72,9 @@ type Timer struct {
 	messages      chan TimerMsg
 }
 
-func New(workDur time.Duration, breakDur time.Duration, workPhases int) Timer {
+func New(interval time.Duration, workDur time.Duration, breakDur time.Duration, workPhases int) Timer {
 	return Timer{
+		interval: interval,
 		workDur:  workDur,
 		breakDur: breakDur,
 		phaseCnt: (workPhases * 2) - 1,
@@ -82,8 +84,15 @@ func New(workDur time.Duration, breakDur time.Duration, workPhases int) Timer {
 	}
 }
 
-func (t *Timer) Events() <-chan TimerMsg {
+func (t *Timer) Messages() <-chan TimerMsg {
 	return t.messages
+}
+
+func (t *Timer) Run() {
+	for t.status != StatusFinished {
+		t.Tick()
+		time.Sleep(t.interval)
+	}
 }
 
 func (t *Timer) Start() {
@@ -145,10 +154,6 @@ func (t *Timer) Tick() {
 	t.messages <- message
 
 	t.phaseLastTick = time.Now()
-}
-
-func (t *Timer) IsFinished() bool {
-	return t.status == StatusFinished
 }
 
 func (t *Timer) phaseRemaining() time.Duration {
