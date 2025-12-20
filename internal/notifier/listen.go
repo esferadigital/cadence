@@ -10,11 +10,7 @@ import (
 const AppName = "Cadence"
 
 func Listen(messages <-chan timer.TimerMsg) {
-	for {
-		msg, ok := <-messages
-		if !ok {
-			return
-		}
+	for msg := range messages {
 		switch msg := msg.(type) {
 		case timer.PhaseFinishedMsg:
 			var text string

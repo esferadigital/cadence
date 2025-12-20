@@ -5,12 +5,8 @@ import (
 	"github.com/esferadigital/cadence/internal/timer"
 )
 
-func Bridge(program *tea.Program, messages <-chan timer.TimerMsg) {
-	for {
-		message, ok := <-messages
-		if !ok {
-			return
-		}
+func Listen(program *tea.Program, messages <-chan timer.TimerMsg) {
+	for message := range messages {
 		program.Send(message)
 	}
 }
