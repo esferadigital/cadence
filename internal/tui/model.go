@@ -30,8 +30,8 @@ var (
 )
 
 const (
-	indicatorCircleOn  = "█"
-	indicatorCircleOff = "░"
+	indicatorOn  = "█"
+	indicatorOff = "░"
 )
 
 func newModel(machine *pomodoro.Machine, appLogger logs.Logger) model {
@@ -129,33 +129,48 @@ func (m model) hints() string {
 }
 
 func renderPhaseIndicator(phase pomodoro.PhaseSnapshot, status pomodoro.TimerStatus, workPhases int, blinkOn bool) string {
+	// Breaks show a textual indicator instead of phase indicators.
 	if phase.Kind == pomodoro.PhaseBreak {
 		return indicatorBox(fmt.Sprintf("break %d", phase.HumanIdx))
 	}
 
-	circleCount := workPhases
-	if circleCount <= 0 {
-		circleCount = 1
+	// Work phases show indicators.
+	// Handle a 0-value `workPhases`, which can happen before the first state update
+	var indicatorCnt int
+	if workPhases <= 0 {
+		indicatorCnt = 1
+	} else {
+		indicatorCnt = workPhases
 	}
+	indicators := make([]string, indicatorCnt)
 
-	circles := make([]string, circleCount)
-	for i := 0; i < circleCount; i++ {
-		circles[i] = indicatorCircleOff
-	}
-
-	activeIdx := phase.HumanIdx - 1
-	if activeIdx >= 0 && activeIdx < circleCount {
-		active := indicatorCircleOn
-		if status == pomodoro.StatusRunning && !blinkOn {
-			active = indicatorCircleOff
+	// Initial state: all indicators off.
+	if status == pomodoro.StatusInit {
+		for i := 0; i < indicatorCnt; i++ {
+			indicators[i] = indicatorOff
 		}
-		circles[activeIdx] = active
-	}
-	for i := 0; i < activeIdx && i < circleCount; i++ {
-		circles[i] = indicatorCircleOn
+		return indicatorBox(strings.Join(indicators, " "))
 	}
 
-	return indicatorBox(strings.Join(circles, " "))
+	// Completed work phases stay on. Pending phases are off. Current phase is blinking.
+	activeIdx := phase.HumanIdx - 1
+	for i := 0; i < indicatorCnt; i++ {
+		if i < activeIdx {
+			indicators[i] = indicatorOn
+		} else {
+			indicators[i] = indicatorOff
+		}
+	}
+
+	if activeIdx >= 0 && activeIdx < indicatorCnt {
+		active := indicatorOn
+		if status == pomodoro.StatusRunning && !blinkOn {
+			active = indicatorOff
+		}
+		indicators[activeIdx] = active
+	}
+
+	return indicatorBox(strings.Join(indicators, " "))
 }
 
 func indicatorBox(content string) string {
