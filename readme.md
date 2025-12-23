@@ -2,7 +2,7 @@
 
 ![clima gif](./demo.gif)
 
-CLI productivity timer.
+Productivity timer for the terminal.
 - Implemented in Go.
 - Bubble Tea-based TUI frontend.
 - Pomodoro state machine driving phase transitions.
