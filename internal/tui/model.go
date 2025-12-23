@@ -13,24 +13,33 @@ import (
 )
 
 type model struct {
-	phase   pomodoro.PhaseSnapshot
-	done    bool
-	status  pomodoro.TimerStatus
-	machine *pomodoro.Machine
-	logger  logs.Logger
-	width   int
-	height  int
+	phase      pomodoro.PhaseSnapshot
+	workPhases int
+	done       bool
+	status     pomodoro.TimerStatus
+	machine    *pomodoro.Machine
+	logger     logs.Logger
+	width      int
+	height     int
+	blinkOn    bool
 }
+
+var (
+	indicatorWidth  = 20
+	indicatorHeight = 1
+)
+
+const (
+	indicatorCircleOn  = "█"
+	indicatorCircleOff = "░"
+)
 
 func newModel(machine *pomodoro.Machine, appLogger logs.Logger) model {
 	return model{machine: machine, logger: appLogger}
 }
 
 func (m model) Init() tea.Cmd {
-	return func() tea.Msg {
-		m.machine.GetState()
-		return nil
-	}
+	return m.getStateCmd()
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -59,8 +68,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 	case pomodoro.EventStateChanged:
+		phaseChanged := msg.Phase.Idx != m.phase.Idx || msg.Phase.Kind != m.phase.Kind
 		m.phase = msg.Phase
 		m.status = msg.Status
+		m.workPhases = msg.WorkPhases
+		if m.status == pomodoro.StatusRunning {
+			if phaseChanged {
+				m.blinkOn = true
+			} else {
+				m.blinkOn = !m.blinkOn
+			}
+		} else {
+			m.blinkOn = true
+		}
 		return m, nil
 	case pomodoro.EventTimerFinished:
 		m.done = true
@@ -78,13 +98,22 @@ func (m model) View() string {
 	if m.done {
 		content = "Nice job!\n\n[q] quit"
 	} else {
-		content = fmt.Sprintf("%s %d\n\n%s\n\n%s", m.phase.Kind, m.phase.HumanIdx, renderRemaining(m.phase.Remaining), m.hints())
+		indicator := renderPhaseIndicator(m.phase, m.status, m.workPhases, m.blinkOn)
+		content = fmt.Sprintf("%s\n\n%s\n\n%s", renderRemaining(m.phase.Remaining), indicator, m.hints())
 	}
 	if m.width > 0 && m.height > 0 {
 		return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
 	}
 	return content
 }
+
+func (m model) getStateCmd() tea.Cmd {
+	return func() tea.Msg {
+		m.machine.GetState()
+		return nil
+	}
+}
+
 func (m model) hints() string {
 	hints := make([]string, 0, 2)
 	switch m.status {
@@ -97,6 +126,49 @@ func (m model) hints() string {
 	}
 	hints = append(hints, "[q] quit")
 	return strings.Join(hints, "  ")
+}
+
+func renderPhaseIndicator(phase pomodoro.PhaseSnapshot, status pomodoro.TimerStatus, workPhases int, blinkOn bool) string {
+	if phase.Kind == pomodoro.PhaseBreak {
+		return indicatorBox(fmt.Sprintf("break %d", phase.HumanIdx))
+	}
+
+	circleCount := workPhases
+	if circleCount <= 0 {
+		circleCount = 1
+	}
+
+	circles := make([]string, circleCount)
+	for i := 0; i < circleCount; i++ {
+		circles[i] = indicatorCircleOff
+	}
+
+	activeIdx := phase.HumanIdx - 1
+	if activeIdx >= 0 && activeIdx < circleCount {
+		active := indicatorCircleOn
+		if status == pomodoro.StatusRunning && !blinkOn {
+			active = indicatorCircleOff
+		}
+		circles[activeIdx] = active
+	}
+	for i := 0; i < activeIdx && i < circleCount; i++ {
+		circles[i] = indicatorCircleOn
+	}
+
+	return indicatorBox(strings.Join(circles, " "))
+}
+
+func indicatorBox(content string) string {
+	width := indicatorWidth
+	height := indicatorHeight
+	contentWidth := lipgloss.Width(content)
+	if width < contentWidth {
+		width = contentWidth
+	}
+	if height < 1 {
+		height = 1
+	}
+	return lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, content)
 }
 
 func formatRemaining(d time.Duration) string {
