@@ -27,8 +27,9 @@ type transition struct {
 }
 
 type stateSnapshot struct {
-	Phase  PhaseSnapshot
-	Status TimerStatus
+	Phase      PhaseSnapshot
+	Status     TimerStatus
+	WorkPhases int
 }
 
 type phaseCompletion struct {

@@ -156,8 +156,9 @@ func (m *Machine) broadcast(event Event) {
 type Event interface{}
 
 type EventStateChanged struct {
-	Phase  PhaseSnapshot
-	Status TimerStatus
+	Phase      PhaseSnapshot
+	Status     TimerStatus
+	WorkPhases int
 }
 
 type EventPhaseFinished struct {
@@ -188,7 +189,8 @@ func eventsFromTransition(transition transition) []Event {
 // Build out the state changed event with a snapshot of the timer state.
 func stateChangedEvent(snapshot stateSnapshot) EventStateChanged {
 	return EventStateChanged{
-		Phase:  snapshot.Phase,
-		Status: snapshot.Status,
+		Phase:      snapshot.Phase,
+		Status:     snapshot.Status,
+		WorkPhases: snapshot.WorkPhases,
 	}
 }

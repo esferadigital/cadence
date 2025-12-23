@@ -7,6 +7,7 @@ import (
 type state struct {
 	workDur       time.Duration
 	breakDur      time.Duration
+	workPhases    int
 	phaseCnt      int
 	phaseIdx      int
 	phaseElapsed  time.Duration
@@ -22,11 +23,12 @@ type advanceDelta struct {
 
 func newState(workDur time.Duration, breakDur time.Duration, workPhases int) *state {
 	return &state{
-		workDur:  workDur,
-		breakDur: breakDur,
-		phaseCnt: (workPhases * 2) - 1,
-		phaseIdx: 0,
-		status:   StatusInit,
+		workDur:    workDur,
+		breakDur:   breakDur,
+		workPhases: workPhases,
+		phaseCnt:   (workPhases * 2) - 1,
+		phaseIdx:   0,
+		status:     StatusInit,
 	}
 }
 
@@ -175,8 +177,9 @@ func (s *state) advance(elapsed time.Duration) advanceDelta {
 
 func (s *state) snapshot() stateSnapshot {
 	return stateSnapshot{
-		Phase:  s.phaseSnapshot(),
-		Status: s.status,
+		Phase:      s.phaseSnapshot(),
+		Status:     s.status,
+		WorkPhases: s.workPhases,
 	}
 }
 
