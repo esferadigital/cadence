@@ -53,6 +53,12 @@ func (s *state) apply(cmd command) transition {
 		if s.resume() {
 			emitState = true
 		}
+	case commandSkipBreak:
+		var skipped bool
+		delta, skipped = s.skipBreak()
+		if skipped {
+			emitState = true
+		}
 	case commandGetState:
 		emitState = true
 	}
@@ -130,6 +136,35 @@ func (s *state) resume() bool {
 		return true
 	}
 	return false
+}
+
+func (s *state) skipBreak() (advanceDelta, bool) {
+	if s.status != StatusRunning && s.status != StatusPaused {
+		return advanceDelta{}, false
+	}
+
+	phase := s.phaseDetail()
+	if phase.Kind != PhaseBreak {
+		return advanceDelta{}, false
+	}
+
+	completion := phaseCompletion{
+		Phase: PhaseSnapshot{
+			Idx:       s.phaseIdx,
+			HumanIdx:  phaseHumanIdx(s.phaseIdx),
+			Kind:      phase.Kind,
+			Duration:  phase.Duration,
+			Remaining: 0,
+		},
+	}
+
+	nextIdx := s.phaseIdx + 1
+	s.phaseIdx = nextIdx
+	s.phaseElapsed = 0
+	s.phaseLastTick = time.Now()
+	s.phaseLastWall = nowWallClock()
+
+	return advanceDelta{completions: []phaseCompletion{completion}, finished: false}, true
 }
 
 func (s *state) advance(elapsed time.Duration) advanceDelta {

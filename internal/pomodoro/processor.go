@@ -15,6 +15,7 @@ const (
 	commandStart command = iota
 	commandPause
 	commandResume
+	commandSkipBreak
 	commandGetState
 )
 

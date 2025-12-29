@@ -66,6 +66,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.machine.Resume()
 				return nil
 			}
+		case "k":
+			return m, func() tea.Msg {
+				m.machine.SkipBreak()
+				return nil
+			}
 		}
 	case pomodoro.EventStateChanged:
 		phaseChanged := msg.Phase.Idx != m.phase.Idx || msg.Phase.Kind != m.phase.Kind
@@ -123,6 +128,9 @@ func (m model) hints() string {
 		hints = append(hints, "[p] pause")
 	case pomodoro.StatusPaused:
 		hints = append(hints, "[r] resume")
+	}
+	if m.phase.Kind == pomodoro.PhaseBreak && (m.status == pomodoro.StatusRunning || m.status == pomodoro.StatusPaused) {
+		hints = append(hints, "[k] skip break")
 	}
 	hints = append(hints, "[q] quit")
 	return strings.Join(hints, "  ")

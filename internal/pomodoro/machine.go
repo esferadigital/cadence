@@ -9,7 +9,7 @@ import (
 
 const (
 	interval      = 250 * time.Millisecond
-	workDuration  = 25 * time.Minute
+	workDuration  = 1 * time.Minute
 	breakDuration = 5 * time.Minute
 	workPhases    = 4
 )
@@ -71,6 +71,12 @@ func (m *Machine) Resume() {
 	m.cmds <- commandResume
 }
 
+// Skips the current break and advances to the next work phase.
+// Only works during breaks while running or paused, otherwise it is a no-op.
+func (m *Machine) SkipBreak() {
+	m.cmds <- commandSkipBreak
+}
+
 // Requests a snapshot of the current machine state.
 // The state is broadcasted with the event `EventStateChanged`.
 func (m *Machine) GetState() {
@@ -116,6 +122,8 @@ func (m *Machine) run() {
 					ticker = nil
 					tickCh = nil
 				}
+			case commandSkipBreak:
+				// No ticker changes.
 			case commandGetState:
 				// No ticker changes.
 			}

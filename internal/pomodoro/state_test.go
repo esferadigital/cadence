@@ -55,3 +55,53 @@ func TestAdvanceFinishesOnVeryLongElapsed(t *testing.T) {
 		t.Fatalf("expected 6 phase completions before finishing, got %d", len(delta.completions))
 	}
 }
+
+func TestSkipBreakAdvancesToWork(t *testing.T) {
+	s := newState(25*time.Minute, 5*time.Minute, 4)
+	if !s.start() {
+		t.Fatal("expected start to succeed")
+	}
+
+	s.advance(s.workDur)
+	if s.phaseDetail().Kind != PhaseBreak {
+		t.Fatalf("expected to be on break before skip, got %s", s.phaseDetail().Kind)
+	}
+
+	delta, skipped := s.skipBreak()
+	if !skipped {
+		t.Fatal("expected skip to succeed during break")
+	}
+	if delta.finished {
+		t.Fatal("expected skip break to keep timer running")
+	}
+	if len(delta.completions) != 1 {
+		t.Fatalf("expected 1 completion, got %d", len(delta.completions))
+	}
+	if delta.completions[0].Phase.Kind != PhaseBreak || delta.completions[0].Phase.Idx != 1 {
+		t.Fatalf("expected completion for break phase 1, got idx=%d kind=%s", delta.completions[0].Phase.Idx, delta.completions[0].Phase.Kind)
+	}
+	if s.phaseDetail().Kind != PhaseWork {
+		t.Fatalf("expected to land on work after skip, got %s", s.phaseDetail().Kind)
+	}
+	if s.phaseElapsed != 0 {
+		t.Fatalf("expected phase elapsed to reset after skip, got %s", s.phaseElapsed)
+	}
+}
+
+func TestSkipBreakNoopDuringWork(t *testing.T) {
+	s := newState(25*time.Minute, 5*time.Minute, 4)
+	if !s.start() {
+		t.Fatal("expected start to succeed")
+	}
+
+	delta, skipped := s.skipBreak()
+	if skipped {
+		t.Fatal("expected skip to be a no-op during work")
+	}
+	if delta.finished || len(delta.completions) > 0 {
+		t.Fatal("expected no completions or finished state when skipping during work")
+	}
+	if s.phaseDetail().Kind != PhaseWork {
+		t.Fatalf("expected to remain on work, got %s", s.phaseDetail().Kind)
+	}
+}
