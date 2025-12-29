@@ -9,7 +9,7 @@ import (
 
 const (
 	interval      = 250 * time.Millisecond
-	workDuration  = 1 * time.Minute
+	workDuration  = 25 * time.Minute
 	breakDuration = 5 * time.Minute
 	workPhases    = 4
 )
@@ -24,13 +24,24 @@ type Machine struct {
 }
 
 // Create a new pomodoro state machine and receive a pointer to it.
-// NOTE: This was developed with the assumption that it is only called once in the application.
 // Pass a logger to capture dropped events when debugging.
-func NewMachine(appLogger logs.Logger) *Machine {
+// Custom phase durations are supported. Use zero or negative minutes to fall back to defaults.
+//
+// NOTE: This was developed with the assumption that it is only called once in the application.
+func NewMachine(appLogger logs.Logger, workMinutes, breakMinutes int) *Machine {
+	work := workDuration
+	breakTime := breakDuration
+	if workMinutes > 0 {
+		work = time.Duration(workMinutes) * time.Minute
+	}
+	if breakMinutes > 0 {
+		breakTime = time.Duration(breakMinutes) * time.Minute
+	}
+
 	m := Machine{
 		cmds:        make(chan command, 10),
 		subscribers: make([]chan Event, 0),
-		processor:   newState(workDuration, breakDuration, workPhases),
+		processor:   newState(work, breakTime, workPhases),
 		logger:      appLogger,
 	}
 
