@@ -49,7 +49,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "q":
 			return m, tea.Quit
 		case "c":
-			return m, navigation.PushCmd(navigation.ViewConfig)
+			return m, navigation.PushCmd(navigation.ViewID("config"))
 		case "s":
 			return m, func() tea.Msg {
 				m.machine.Start()
