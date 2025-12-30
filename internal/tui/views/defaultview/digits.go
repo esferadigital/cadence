@@ -1,4 +1,4 @@
-package tui
+package defaultview
 
 var digitMap = map[string][]string{
 	"0": {
