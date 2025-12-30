@@ -3,11 +3,11 @@ package main
 import (
 	"flag"
 
-	"github.com/esferadigital/cadence/internal/config"
-	"github.com/esferadigital/cadence/internal/logs"
-	"github.com/esferadigital/cadence/internal/notify"
-	"github.com/esferadigital/cadence/internal/pomodoro"
-	"github.com/esferadigital/cadence/internal/tui"
+	"github.com/diegoserranor/cadence/internal/config"
+	"github.com/diegoserranor/cadence/internal/logs"
+	"github.com/diegoserranor/cadence/internal/notify"
+	"github.com/diegoserranor/cadence/internal/pomodoro"
+	"github.com/diegoserranor/cadence/internal/tui"
 )
 
 func main() {

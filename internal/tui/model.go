@@ -3,12 +3,12 @@ package tui
 import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/esferadigital/cadence/internal/config"
-	"github.com/esferadigital/cadence/internal/logs"
-	"github.com/esferadigital/cadence/internal/pomodoro"
-	"github.com/esferadigital/cadence/internal/tui/navigation"
-	"github.com/esferadigital/cadence/internal/tui/views/configview"
-	"github.com/esferadigital/cadence/internal/tui/views/defaultview"
+	"github.com/diegoserranor/cadence/internal/config"
+	"github.com/diegoserranor/cadence/internal/logs"
+	"github.com/diegoserranor/cadence/internal/pomodoro"
+	"github.com/diegoserranor/cadence/internal/tui/navigation"
+	"github.com/diegoserranor/cadence/internal/tui/views/configview"
+	"github.com/diegoserranor/cadence/internal/tui/views/defaultview"
 )
 
 type model struct {

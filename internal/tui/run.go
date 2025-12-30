@@ -5,9 +5,9 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/esferadigital/cadence/internal/config"
-	"github.com/esferadigital/cadence/internal/logs"
-	"github.com/esferadigital/cadence/internal/pomodoro"
+	"github.com/diegoserranor/cadence/internal/config"
+	"github.com/diegoserranor/cadence/internal/logs"
+	"github.com/diegoserranor/cadence/internal/pomodoro"
 )
 
 func Run(events <-chan pomodoro.Event, machine *pomodoro.Machine, cfg config.Config, appLogger logs.Logger) {

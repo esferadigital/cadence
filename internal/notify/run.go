@@ -3,7 +3,7 @@ package notify
 import (
 	"fmt"
 
-	"github.com/esferadigital/cadence/internal/pomodoro"
+	"github.com/diegoserranor/cadence/internal/pomodoro"
 	"github.com/gen2brain/beeep"
 )
 

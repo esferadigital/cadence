@@ -8,8 +8,8 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/esferadigital/cadence/internal/pomodoro"
-	"github.com/esferadigital/cadence/internal/tui/navigation"
+	"github.com/diegoserranor/cadence/internal/pomodoro"
+	"github.com/diegoserranor/cadence/internal/tui/navigation"
 )
 
 type Model struct {

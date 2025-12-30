@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/esferadigital/cadence/internal/logs"
+	"github.com/diegoserranor/cadence/internal/logs"
 )
 
 const (

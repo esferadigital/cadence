@@ -1,4 +1,4 @@
-module github.com/esferadigital/cadence
+module github.com/diegoserranor/cadence
 
 go 1.25.5
 
