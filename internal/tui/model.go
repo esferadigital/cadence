@@ -3,6 +3,7 @@ package tui
 import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/esferadigital/cadence/internal/config"
 	"github.com/esferadigital/cadence/internal/logs"
 	"github.com/esferadigital/cadence/internal/pomodoro"
 	"github.com/esferadigital/cadence/internal/tui/navigation"
@@ -17,14 +18,14 @@ type model struct {
 	nav    navigation.Navigator
 }
 
-func newModel(machine *pomodoro.Machine, appLogger logs.Logger) model {
+func newModel(machine *pomodoro.Machine, cfg config.Config, appLogger logs.Logger) model {
 	return model{
 		logger: appLogger,
 		nav: navigation.New(
 			navigation.ViewID("default"),
 			map[navigation.ViewID]tea.Model{
 				navigation.ViewID("default"): defaultview.New(machine),
-				navigation.ViewID("config"):  configview.New(),
+				navigation.ViewID("config"):  configview.New(cfg),
 			}),
 	}
 }

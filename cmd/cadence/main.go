@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 
+	"github.com/esferadigital/cadence/internal/config"
 	"github.com/esferadigital/cadence/internal/logs"
 	"github.com/esferadigital/cadence/internal/notify"
 	"github.com/esferadigital/cadence/internal/pomodoro"
@@ -19,12 +20,17 @@ func main() {
 	defer appLogger.Clean()
 	appLogger.SetEnabled(*debug)
 
-	m := pomodoro.NewMachine(appLogger, *workMinutes, *breakMinutes)
+	cfg, err := config.LoadWithOverrides(*workMinutes, *breakMinutes)
+	if err != nil && appLogger != nil {
+		appLogger.Printf("config load failed: %v", err)
+	}
+
+	m := pomodoro.NewMachine(appLogger, cfg.WorkMinutes, cfg.BreakMinutes, cfg.WorkPhases)
 	m.Run()
 
 	notifySub := m.Subscribe()
 	notify.Run(notifySub)
 
 	tuiSub := m.Subscribe()
-	tui.Run(tuiSub, m, appLogger)
+	tui.Run(tuiSub, m, cfg, appLogger)
 }
